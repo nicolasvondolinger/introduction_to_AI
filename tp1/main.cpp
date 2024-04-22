@@ -86,6 +86,7 @@ bool dls(vector<vector<int>>& board, int limit){
             if(board[i][j] == 0){
                 for(int k = 1; k < 10; k++){
                     if(possible(board, i, j, k)){
+                        globalState++;
                         board[i][j] = k;
                         if(dls(board, limit - 1)) return true;
                         board[i][j] = 0;
@@ -207,6 +208,7 @@ void solve(){
     case 'I': // Iterative deepening search
         setBoard(board);
         idfs(board, 81);
+        cout << globalState << endl;
         printBoard(board);
         break;
     case 'U': // Uniform-cost search
