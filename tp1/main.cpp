@@ -34,6 +34,35 @@ bool possible(vector<vector<int>>& board, int y, int x, int n){
   return true;
 }
 
+int mostCommumNumber(vector<vector<int>>& board){
+  vector<int> quant(10, 0);
+  for(int i = 0; i < 9; i++){
+    for(int j = 0; j < 9; j++){
+      if(board[i][j] != 0) quant[board[i][j]]++;
+    }
+  }
+
+  int b = 0, ans = 0;
+  for(int i = 1; i < 10; i++){
+    if(quant[i] >= b && quant[i] != 9){
+      ans = i;
+      b = quant[i];
+    }
+  }
+
+  return ans;
+}
+
+int complete(vector<vector<int>>& board){
+  for(int i = 0; i < 9; i++){
+    for(int j = 0; j < 9; j++){
+      if(board[i][j] == 0) return false;
+    }
+  }
+
+  return true;
+}
+
 int bfs(vector<vector<int>>& board){
 
   queue<vector<vector<int>>> q;
@@ -175,6 +204,36 @@ bool dfs(vector<vector<int>>& board) {
   return true;
 }
 
+void printBoard(vector<vector<int>>& board){
+    cout << "---------------------" << endl;
+    for (int i = 0; i < 9; i++){
+        for(int j = 0; j < 9; j++){
+            cout << board[i][j];
+        }
+        cout << endl;
+    }
+    cout << "---------------------" << endl;
+}
+
+bool greedy(vector<vector<int>>& board) {
+  //printBoard(board);
+  int n = mostCommumNumber(board);
+  if(n == 0) return true;
+
+  for (int i = 0; i < 9; i++) {
+    for (int j = 0; j < 9; j++) {
+      if (board[i][j] == 0 && possible(board, i, j, n)) {
+        board[i][j] = n;
+        if (greedy(board)) return true;
+        board[i][j] = 0; 
+      }
+    }
+  }
+
+  return false;
+
+}
+
 void setBoard(vector<vector<int>>& board){
     for(int i = 0; i < 9; i++){
         string s; cin >> s;
@@ -183,7 +242,7 @@ void setBoard(vector<vector<int>>& board){
         }
     }
 }
-
+/*
 void printBoard(vector<vector<int>>& board){
     for (int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
@@ -192,6 +251,7 @@ void printBoard(vector<vector<int>>& board){
         cout << endl;
     }
 }
+*/
 
 void solve(){
     
@@ -218,10 +278,14 @@ void solve(){
         printBoard(board);
         break;
     case 'A': // A* search
+        setBoard(board);
 
+        printBoard(board);
         break;
     case 'G': // Greedy best-first search
-
+        setBoard(board);
+        greedy(board);
+        printBoard(board);
         break;
     case 'D': // DFS
         setBoard(board);
