@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 
 using namespace std;
+using namespace std::chrono;
         
 #define _ ios_base::sync_with_stdio(0); cin.tie(0);
 #define ff first
@@ -204,19 +205,7 @@ bool dfs(vector<vector<int>>& board) {
   return true;
 }
 
-void printBoard(vector<vector<int>>& board){
-    cout << "---------------------" << endl;
-    for (int i = 0; i < 9; i++){
-        for(int j = 0; j < 9; j++){
-            cout << board[i][j];
-        }
-        cout << endl;
-    }
-    cout << "---------------------" << endl;
-}
-
 bool greedy(vector<vector<int>>& board) {
-  //printBoard(board);
   int n = mostCommumNumber(board);
   if(n == 0) return true;
 
@@ -224,6 +213,7 @@ bool greedy(vector<vector<int>>& board) {
     for (int j = 0; j < 9; j++) {
       if (board[i][j] == 0 && possible(board, i, j, n)) {
         board[i][j] = n;
+        globalState++;
         if (greedy(board)) return true;
         board[i][j] = 0; 
       }
@@ -234,74 +224,132 @@ bool greedy(vector<vector<int>>& board) {
 
 }
 
-void setBoard(vector<vector<int>>& board){
-    for(int i = 0; i < 9; i++){
-        string s; cin >> s;
-        for(int j = 0; j < 9; j++){
-            board[i][j] = s[j] - '0';
+int findOptions(vector<vector<int>>& board, int row, int col) {
+    int num = 0;
+    for (int i = 1; i <= 9; ++i) {
+        if (possible(board, row, col, i)) num++;
+    }
+    return num;
+}
+
+int aStarSearch(vector<vector<int>>& board) {
+    // Fila de prioridade para armazenar as células vazias com base no número de opções
+    priority_queue<pair<int, pair <pair<int, int>, vector<vector<int>>>>> q;
+    int c = 0, states = 0, m = INT_MAX;
+
+    pair<int, int> p;
+    for (int i = 0; i < 9; ++i) {
+        for (int j = 0; j < 9; ++j) {
+            if (board[i][j] == 0) {
+              int aux = findOptions(board, i, j);
+              if(aux < m){
+                m = aux; p.ff = i; p.ss = j;
+              }
+            }
+        }
+    }
+
+    q.push({c, {p, board}});
+
+    
+    while (!q.empty()) {
+      m = INT_MAX;
+        vector<vector<int>> aux = q.top().ss.ss;
+        int row = q.top().ss.ff.ff;
+        int col = q.top().ss.ff.ss;
+        q.pop();
+        
+        for(int k = 1; k < 10; k++){
+          if(possible(aux, row, col, k)){
+            aux[row][col] = k;
+            for (int i = 0; i < 9; ++i) {
+              for (int j = 0; j < 9; ++j) {
+                  if (aux[i][j] == 0) {
+                    int a = findOptions(aux, i, j);
+                    if(a < m){
+                      m = a; p.ff = i; p.ss = j;
+                    }
+                  }
+              }
+            }
+            c--;
+            q.push({c, {{p.ff, p.ss},aux}}); states++;
+          }
+        }
+        board = aux;
+    }
+
+    return states;
+}
+
+void setBoard(vector<vector<int>>& board, const string& input) {
+    int idx = 0;
+    for (int i = 0; i < 9; ++i) {
+        for (int j = 0; j < 9; ++j) {
+            while (input[idx] == ' ') idx++; 
+            board[i][j] = input[idx++] - '0'; 
         }
     }
 }
-/*
-void printBoard(vector<vector<int>>& board){
+
+void printBoard(vector<vector<int>>& board){ 
     for (int i = 0; i < 9; i++){
         for(int j = 0; j < 9; j++){
             cout << board[i][j];
         }
-        cout << endl;
-    }
+        cout << " ";
+    }   
 }
-*/
 
-void solve(){
-    
-    char c; cin >> c;
-    vector<vector<int>> board (9, vector<int> (9, 0));
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        cerr << "Usage: " << argv[0] << " <algorithm_character> <board_input>" << endl;
+        return 1;
+    }
+
+    char c = argv[1][0];
+    string input = argv[2];
+
+    vector<vector<int>> board(9, vector<int>(9, 0));
+    setBoard(board, input);
     int n;
-    switch (c) {
-    case 'B': // BFS
-        setBoard(board);
-        n = bfs(board);
-        printBoard(board);
-        cout << n << endl;
-        break;
-    case 'I': // Iterative deepening search
-        setBoard(board);
-        idfs(board, 81);
-        cout << globalState << endl;
-        printBoard(board);
-        break;
-    case 'U': // Uniform-cost search
-        setBoard(board);
-        n = ucs(board);
-        cout << n << endl;
-        printBoard(board);
-        break;
-    case 'A': // A* search
-        setBoard(board);
 
-        printBoard(board);
-        break;
-    case 'G': // Greedy best-first search
-        setBoard(board);
-        greedy(board);
-        printBoard(board);
-        break;
-    case 'D': // DFS
-        setBoard(board);
-        dfs(board);
-        cout << globalState << endl;
-        printBoard(board);
-        break;
-    default:
-        cout << "Entrada incorreta." << endl;
-        break;
+    auto start = high_resolution_clock::now();
+
+    switch (c) {
+        case 'B': // BFS
+            n = bfs(board);
+            break;
+        case 'I': // Iterative deepening search
+            idfs(board, 81);
+            break;
+        case 'U': // Uniform-cost search
+            n = ucs(board);
+            break;
+        case 'A': // A* search
+            n = aStarSearch(board);
+            break;
+        case 'G': // Greedy best-first search
+            greedy(board);
+            break;
+        case 'D': // DFS
+            dfs(board);
+            break;
+        default:
+            cerr << "Invalid input." << endl;
+            return 1;
     }
 
-}
-    
-int main(){ 
-    int t = 1;
-    while(t--) solve();
-    exit(0);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<milliseconds>(stop - start);
+
+    if (c == 'B' || c == 'U' || c == 'A') {
+        cout << n << " " << duration.count() << endl;
+    } else if (c == 'I' || c == 'D' || c == 'G') {
+        cout << globalState << " " << duration.count() << endl;
+    }
+
+    printBoard(board);
+
+    return 0;
 }
